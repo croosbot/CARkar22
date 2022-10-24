@@ -37,8 +37,7 @@ int n;
 void loop() {
   switch(sq_d){
     case(0): mission_1(); break;
-    case(1): wall_0(); break;
-    case(2): wall_1(); break;
+    case(1): wall_1(); break;
     default: break;
   }  
 }    
@@ -91,7 +90,9 @@ static byte s, sqa;
 void wmove(byte wlft, byte wrgt){
 static byte tmpl, tmpr;
 static bool gos;
-  if((wlft&0x80)==(wrgt&0x80)) gos=1; else gos=0;
+  wlft&=0xBF; wrgt&=0xBF;
+//  if((wlft&0x80)==(wrgt&0x80)) gos=1; else gos=0;
+  if((wlft)==(wrgt)) gos=1; else gos=0;
   ahead(0xFF);    // disable ahead()
   if(wlft&0x80) digitalWrite(DIRL,1); else digitalWrite(DIRL,0);
   tmpl=wlft&0x3F;
