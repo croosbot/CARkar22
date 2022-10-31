@@ -16,8 +16,7 @@ static byte sq_m;
       switch(sq_m){
         case(0): if(button()){
                   wmove(0x18,0x18);
-                  //wmove(0x18,0x1A);
-                    O_Set(900); 
+                     O_Set(900); 
                     sq_m=1;
                   }break;
         case(1): if(MoveRdy){
@@ -35,8 +34,7 @@ static byte sq_m;
                  }break;
         case(5): if(Halted) sq_m=6; break;
         case(6): wmove(0x18,0x18);
-                 //wmove(0x18,0x1A);                
-                 O_Set(900);
+                  O_Set(900);
                  sq_m=1;
                  break;
           
