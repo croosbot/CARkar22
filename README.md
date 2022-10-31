@@ -1,6 +1,6 @@
 #### CARkar22 highlights
 #####
-differential wheeldrive<br>
+differential wheeldrive  
 Arduino Uno processorboard -ATMEGA328 uproc 
 RC5 remote control  
 sharp GP2Y0A60SZLF ranging sensors (3)   
