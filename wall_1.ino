@@ -26,7 +26,7 @@ int errL, errR;
       avgsumL/=20;
       avgsumL+=tmp;      
       dervL=avgsumL/3;      // 3 2
-      Serial.println(dervL);
+  //    Serial.println(dervL);
       tmp=rangeR0-range[2];
       rangeR0=range[2];
       avgsumR*=10;

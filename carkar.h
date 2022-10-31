@@ -10,13 +10,13 @@
 
 typedef unsigned int uint;
 
-
 #define PCF8574_I2C_ADDRESS 0x20
+#define RC5_I2C_ADDRESS 0x0B
 #define TCCR2B _SFR_MEM8(0xB1)
-#define PROBE   A0
-#define IRS_L   A1
-#define IRS_C   A2
-#define IRS_R   A3
+//#define PROBE   A0
+//#define IRS_L   A1
+//#define IRS_C   A2
+//#define IRS_R   A3
 #define MoveRdy b_odo & 0x1
 #define O_Set(x) odoref=odosum +(x); b_odo=0
 #define Halted rung==0
@@ -30,7 +30,11 @@ enum{
   DIRL  = 9,
   PWML  = 11,
   BUTT  = 12,
-  LED   = 13
+  LED   = 13,
+  PROBE = 14,   //A0
+  IRS_L = 15,   //A1
+  IRS_C = 16,   //A2
+  IRS_R = 17    //A3
 };
 
 
@@ -42,5 +46,6 @@ byte c_odo, b_odo;
 int8_t straight;
 int8_t rung;    // running
 byte range[3];
+byte rc5_msg;
 
 #endif

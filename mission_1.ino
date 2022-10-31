@@ -7,6 +7,7 @@ static byte sq_m;
     ms=millis();
     if(ms > msref){
       msref=ms+30;
+      if(getRC5()) Serial.println(rc5_msg);
       if(rung) rung--; // running
       if(!rung)  ledBlink();
       while(c_odo){c_odo--; odosum++; if(odosum==odoref) b_odo=1;}

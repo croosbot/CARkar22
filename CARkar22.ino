@@ -29,22 +29,49 @@ int n;
  if(n==1){
   sq_d=Wire.read()&0x7;   // read 3bit switchregister
   Wire.endTransmission();
+  Serial.println(A0);
+  Serial.println(A3);
  }
-//  Serial.println(555); 
 }
 
 /*=========================== LOOP =========================*/
-void loop() {
+void loop(){
+int i;
+int n;
+ // for(i=2;i<64;i++){
+ //     n= Wire.requestFrom(i,1); // aantal bytes
+ //     if(n==1)Serial.println(i);
+ //     else{Serial.print(". "); Serial.println(i);}
+ // }  
   switch(sq_d){
     case(0): mission_1(); break;
     case(1): wall_1(); break;
     default: break;
   }  
-}    
+}
+
+bool getRC5(void){
+static byte derate=10;
+int n, m;
+   n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal bytes
+   if(n==1){        // check remote message flag
+     m=Wire.read();
+     Wire.endTransmission();
+     if(m&0x8){                 // ? new remote mmessage
+       n= Wire.requestFrom(RC5_I2C_ADDRESS,1); // aantal bytes
+       if(n==1){
+         rc5_msg=Wire.read();   // acquire
+         Wire.endTransmission();
+         return(1);
+       }else Serial.println("RC5read fail");  
+    }                           // nothing
+  }
+  return(0);
+}
 
 //======= read IR sensors here ==========
 void acq_sensors(void){
-uint raw;
+int raw;
 static byte derate=30;
   raw=analogRead(IRS_L);
   raw= (40000)/raw;
@@ -58,7 +85,7 @@ static byte derate=30;
   raw= (40000)/raw;
   if(raw > 255) raw=255;          
   range[2]=(byte)raw;
-#if 0
+ #if 0
   derate--;
   if(derate==0){
     derate=30;
@@ -69,7 +96,8 @@ static byte derate=30;
     Serial.println(range[2]); // right
    } 
 #endif  
-}    
+}
+    
 
 void ahead(byte cnfg){
 static byte s, sqa;
