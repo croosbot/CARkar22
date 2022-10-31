@@ -3,8 +3,6 @@
 // 06-10-2022
 // O_Set(200) :: 360 dgr rotate
 
-
-
 #ifndef __carkar_h
 #define __carkar_h
 
