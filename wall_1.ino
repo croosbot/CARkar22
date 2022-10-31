@@ -13,7 +13,8 @@ int errL, errR;
     ms=millis();
     while(c_odo){c_odo--; odosum++; if(odosum==odoref) b_odo=1;}
     if(ms > msref){
-      msref=ms+30;      
+      msref=ms+30;
+      if(getRC5()) Serial.println(rc5_msg);      
       if(rung) rung--; // running
       acq_sensors();
       errL=range[0]-120;   // far:pos near:neg   -78..135;

@@ -29,8 +29,6 @@ int n;
  if(n==1){
   sq_d=Wire.read()&0x7;   // read 3bit switchregister
   Wire.endTransmission();
-  Serial.println(A0);
-  Serial.println(A3);
  }
 }
 
