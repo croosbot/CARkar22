@@ -27,14 +27,12 @@ int errL, errR;
       avgsumL/=20;
       avgsumL+=tmp;      
       dervL=avgsumL/3;      // 3 2
-  //    Serial.println(dervL);
       tmp=rangeR0-range[2];
       rangeR0=range[2];
       avgsumR*=10;
       avgsumR/=20;      
       avgsumR+=tmp;
       dervR=avgsumR/3;      // 3 2      
- //     Serial.println(errL);
       ledBlink();
       if(sq_m && button()){wmove(0x0,0x0); sq_m=0;} 
       switch(sq_m){
@@ -57,8 +55,6 @@ int errL, errR;
                   else wmove(0x18,0x18);                               
                 break;
        case(3): if(Halted) sq_m=4; break;
-//       case(3): if(Halted) sq_m=0; break;
-       
        case(4): wmove(0x11,0x91);
                 O_Set(99);   // 98 95 100
                 sq_m=5;
