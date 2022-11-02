@@ -36,18 +36,15 @@ int n;
 void loop(){
 int i;
 int n;
- // for(i=2;i<64;i++){
- //     n= Wire.requestFrom(i,1); // aantal bytes
- //     if(n==1)Serial.println(i);
- //     else{Serial.print(". "); Serial.println(i);}
- // }  
-  switch(sq_d){
-    case(0): mission_1(); break;
-    case(1): wall_1(); break;
+  switch(sq_d){           // dipswitch 0:down  1:up
+    case(0): mission_1(); //  000  
+    case(1): wall_1();    //  001
+    case(2): demo();      //  010
     default: break;
   }  
 }
 
+//==== check RC5req for pending rc5_msg ->  Get rc5_msg ===
 bool getRC5(void){
 static byte derate=10;
 int n, m;
@@ -67,7 +64,7 @@ int n, m;
   return(0);
 }
 
-//======= read IR sensors here ==========
+//======= read IR SHARP sensors ==========
 void acq_sensors(void){
 int raw;
 static byte derate=30;
@@ -96,6 +93,11 @@ static byte derate=30;
 #endif  
 }
     
+
+/* === cancel drifting left/right ===
+ straight ?pos->drifting right   ?neg->drifting left
+  s=6 -> about straight ahead       s<6 -> turn slightly right   s -> turn slightly left
+*/
 
 void ahead(byte cnfg){
 static byte s, sqa;

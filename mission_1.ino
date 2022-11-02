@@ -1,5 +1,6 @@
 #include "carkar.h"
 
+//==== dipswitch setting 001 ====
 void mission_1() {     
 static byte sq_m;
   while(1){
@@ -41,4 +42,25 @@ static byte sq_m;
      } // end switch
     } // end ms
   } // end while
+}
+
+//==== dipswitch setting 010 ====
+void demo(){
+static bool togg=0;
+   while(1){
+    ms=millis();
+    if(ms > msref){
+      msref=ms+30;
+      ledBlink();
+      if(getRC5()){
+        if(rc5_msg==0xFF){
+            Wire.beginTransmission(PCF8574_I2C_ADDRESS);
+            if(togg) Wire.write(0x8F);   // redled off
+            else Wire.write(0x0F);   // redled on
+            Wire.endTransmission();
+            togg=!togg;          
+        }
+      }
+    }
+  }  
 }

@@ -1,5 +1,6 @@
 #include "carkar.h"
 
+//==== dipswitch setting 000 ====
 void wall_1(){
 byte spdL, spdR;
 int8_t rangeL0, rangeR0, tmp, sq_m,dervL, dervR;
