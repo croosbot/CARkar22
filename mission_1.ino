@@ -46,21 +46,41 @@ static byte sq_m;
 
 //==== dipswitch setting 010 ====
 void demo(){
-static bool togg=0;
+bool togg=0;
+uint8_t sq;
+uint8_t range_p;
    while(1){
     ms=millis();
     if(ms > msref){
       msref=ms+30;
       ledBlink();
+      acq_sensors();
       if(getRC5()){
         if(rc5_msg==0xFF){
             Wire.beginTransmission(PCF8574_I2C_ADDRESS);
             if(togg) Wire.write(0x8F);   // redled off
             else Wire.write(0x0F);   // redled on
             Wire.endTransmission();
-            togg=!togg;          
+            togg=!togg;
+            sq=0;          
+        }else if(rc5_msg > 0xFB) sq=rc5_msg;
+        else{
+          sq=0;
+          Serial.println(rc5_msg);
         }
       }
-    }
-  }  
+      switch(sq){
+        case(0): break;
+        case(0xFE): acq_sensors();                  // show left sensor
+                      if(range_p != range[0]) Serial.println(range[0]);
+                      range_p=range[0]; break;
+        case(0xFD): acq_sensors();                  // show centre sensor
+                      if(range_p != range[1]) Serial.println(range[1]);
+                      range_p=range[1]; break;
+        case(0xFC): acq_sensors();                  // show right sensor
+                      if(range_p != range[2]) Serial.println(range[2]);
+                      range_p=range[2]; break;
+      }
+    } // end ms
+  } // end while  
 }

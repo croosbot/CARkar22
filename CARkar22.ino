@@ -39,7 +39,7 @@ int n;
   switch(sq_d){           // dipswitch 0:down  1:up
     case(0): mission_1(); //  000  
     case(1): wall_1();    //  001
-    case(2): demo();      //  010
+    case(5): demo();      //  010
     default: break;
   }  
 }
@@ -119,8 +119,8 @@ void wmove(byte wlft, byte wrgt){
 static byte tmpl, tmpr;
 static bool gos;
   wlft&=0xBF; wrgt&=0xBF;
-//  if((wlft&0x80)==(wrgt&0x80)) gos=1; else gos=0;
-  if((wlft)==(wrgt)) gos=1; else gos=0;
+//  if((wlft)==(wrgt)) gos=1; else gos=0;
+  gos=((wlft)==(wrgt))?1:0;
   ahead(0xFF);    // disable ahead()
   if(wlft&0x80) digitalWrite(DIRL,1); else digitalWrite(DIRL,0);
   tmpl=wlft&0x3F;
