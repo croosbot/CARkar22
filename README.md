@@ -1,4 +1,4 @@
-#### CARkar22 highlights
+#### CARkar22 autonomous robot highlights
 #####
 <p>differential wheeldrive<br>
 Arduino Uno processorboard -ATMEGA328 uproc<br>
