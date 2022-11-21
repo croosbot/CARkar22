@@ -5,6 +5,7 @@ sharp GP2Y0A60SZLF ranging sensors (3)<br>
 RC5 remote control<br>  
 4 quadrant encoders !!<br>
 2S Lipo battery 1000 mAh<br>
+8.3V switched mode wheelDriveSupply regulator<br>
 Batwat Lipo supervisor refer: "https://home.hccnet.nl/coen.roos"</p>
 
 
