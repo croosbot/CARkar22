@@ -31,6 +31,8 @@ enum{
   IRS_R = 17    //A3
 };
 
+enum{Lft,Ctr,Rgt};
+
 unsigned long ms, msref;
 bool edge;
 uint16_t odosum, odoref;

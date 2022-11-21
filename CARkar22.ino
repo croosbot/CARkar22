@@ -9,8 +9,9 @@ static int sq_d;      //dispatch
 
 void setup() {
 int n;
-  Serial.begin(115200);          // start serial
-  pinMode(LED, OUTPUT);          // led pin op output
+ Serial.begin(9600);          // start serial
+ // Serial.begin(115200);     // start serial
+  pinMode(LED, OUTPUT);       // led pin op output
   pinMode(DIRL, OUTPUT);       
   pinMode(DIRR, OUTPUT);   
   pinMode(PWML, OUTPUT);     
@@ -18,12 +19,13 @@ int n;
   pinMode(ENC_L,INPUT);
   pinMode(ENC_R,INPUT);
   pinMode(BUTT,INPUT_PULLUP);  
-  //TCCR2B=TCCR2B & B11111000 | B00000001;   // 31,3 kHz   05-05-2020
-  TCCR2B=TCCR2B & B11111000 | B00000010;   // 4 kHz   04-10-2022
+  TCCR2B=TCCR2B & B11111000 | B00000001;  // 31,3 kHz 270mA @wmove(0x18,0x18)
+ //TCCR2B=TCCR2B & B11111000 | B00000010; // 4 kHz  300mA @wmove(0x18,0x18)
   msref=millis()+10;
   wmove(0x0,0x0);
   enco0_L=digitalRead(ENC_L);
   enco0_R=digitalRead(ENC_R);
+  redled(0); // redled OFF
   Wire.begin();              // start I2C 
   n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal bytes
  if(n==1){
@@ -39,7 +41,8 @@ int n;
   switch(sq_d){           // dipswitch 0:down  1:up
     case(0): mission_1(); //  000  
     case(1): wall_1();    //  001
-    case(5): demo();      //  010
+    case(4): wall_eval(); //  100
+    case(5): demo();      //  101
     default: break;
   }  
 }
@@ -80,59 +83,54 @@ static byte derate=30;
   raw= (40000)/raw;
   if(raw > 255) raw=255;          
   range[2]=(byte)raw;
- #if 0
-  derate--;
-  if(derate==0){
-    derate=30;
-    Serial.print(range[0]);   // left
-    Serial.print(" ");
-    Serial.print(range[1]);   // center
-    Serial.print(" ");
-    Serial.println(range[2]); // right
-   } 
-#endif  
 }
     
 
 /* === cancel drifting left/right ===
  straight ?pos->drifting right   ?neg->drifting left
-  s=6 -> about straight ahead       s<6 -> turn slightly right   s -> turn slightly left
+ v=8 -> about straight ahead   v<8 -> turn slightly right   v>8  -> turn slightly left
 */
 
 void ahead(byte cnfg){
-static byte s, sqa;
+static byte v, sqa;
+uint16_t itmp;
   if(cnfg){
     if(cnfg==0xFF) sqa=0;  // disable 'ahead'
-    else{s=cnfg; s=s<<2; straight=0; sqa=1;}   // s+8 about straight
+    else{
+      v=cnfg; straight=0; sqa=1;
+      v &= 0x3F;
+      v=v<<2;
+      }   // v+8 about straight
   }  
   switch(sqa){
       case(0): break;
-      case(1): if(straight > 0){digitalWrite(LED,1); analogWrite(PWMR, s+10); sqa=2;} //+12
-               else if(straight < 0){digitalWrite(LED,0); analogWrite(PWMR, s+3); sqa=3;} break;
+      case(1): if(straight > 0){digitalWrite(LED,1); analogWrite(PWMR, v+12); sqa=2;} //+12
+               else if(straight < 0){digitalWrite(LED,1); analogWrite(PWMR, v+3); sqa=3;} break;
 
-      case(2): if(straight <= 0){digitalWrite(LED,0); analogWrite(PWMR, s+8); sqa=1;} break;
-      case(3): if(straight >= 0){analogWrite(PWMR, s+8); sqa=1;} break;
+      case(2): if(straight <= 0){digitalWrite(LED,0); analogWrite(PWMR, v+8); sqa=1;} break;
+      case(3): if(straight >= 0){digitalWrite(LED,0); analogWrite(PWMR, v+8); sqa=1;} break;
     }  
 }
- 
+
+
 void wmove(byte wlft, byte wrgt){
-static byte tmpl, tmpr;
-static bool gos;
+//static byte tmpl, tmpr;
+//static bool gos;
+byte tmpl, tmpr;
+bool gos;
+uint16_t itmp;
   wlft&=0xBF; wrgt&=0xBF;
-//  if((wlft)==(wrgt)) gos=1; else gos=0;
-  gos=((wlft)==(wrgt))?1:0;
+  gos=((wlft)==(wrgt))?1:0;   // go straight
   ahead(0xFF);    // disable ahead()
   if(wlft&0x80) digitalWrite(DIRL,1); else digitalWrite(DIRL,0);
   tmpl=wlft&0x3F;
   tmpl=tmpl<<2;
-//  Serial.print(tmpl);
-//  Serial.print(" ");
-  analogWrite(PWML, tmpl);  
+  analogWrite(PWML, tmpl);
   if(wrgt&0x80) digitalWrite(DIRR,1); else digitalWrite(DIRR,0);
   tmpr=wrgt&0x3F;
   tmpr=tmpr<<2;
-  tmpr+=8;
-  analogWrite(PWMR, tmpr);     // straight compensation
+  if(tmpr < 248) tmpr+=8;     // straight compensation
+  analogWrite(PWMR, tmpr);
   if(gos) ahead(wlft&0x3F); else ahead(0xFF);
 }
 
@@ -144,14 +142,14 @@ byte enco_L, enco_R;
     c_odo++;
     enco0_L=enco_L;
     straight++;
-    rung=10;
+    rung=10;        // keep running preset value
   }
   enco_R=digitalRead(ENC_R);
   if(enco_R!=enco0_R){   //Serial.println(odo_R,DEC);
     c_odo++;
     enco0_R=enco_R;
     straight--;
-    rung=10;
+    rung=10;      // keep running preset value
 //    Serial.println(straight);
   }  
 }
@@ -174,21 +172,12 @@ static byte sq=0;
     case(1): if(digitalRead(BUTT)) {sq=0; return(1);}
   }
   return(0);
-}  
-
-#if 0
-   // 10 ms lus
-  int ms = millis();
-  if ((ms - MainTakt) > 0) {
-    MainTakt = ms + 10;  // zet tijd voor volgende interval 
-//    printf("%d\n",SharpAfstand(A2));
-    if(SharpAfstand(A2)>100) edge=true; else edge=false;
-    RijdenTakt();  
-  }                
-
-int SharpAfstand(int Pin){
-  int SensorValue = analogRead(Pin);
-  int Afstand = (40000) / SensorValue;
-  return Afstand;
 }
-#endif
+
+// offboard LED
+void redled(bool Nf){
+  Wire.beginTransmission(PCF8574_I2C_ADDRESS);
+  if(Nf) Wire.write(0x0F);  // redled on
+  else Wire.write(0x8F);    // redled off
+  Wire.endTransmission();
+}
