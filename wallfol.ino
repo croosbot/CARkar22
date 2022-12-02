@@ -5,8 +5,8 @@
 // range[x]  [40..255]
 //==== dipswitch setting 001 ====
 void wall_1(){
-byte spdL, spdR;
-byte tmp;
+uint8_t spdL, spdR;
+uint8_t tmp;
 int8_t rangeL0, rangeR0, sq_m, dervL, dervR;
 int errLS, errRS;   // error LeftSide,RightSide
 int kP, kD;
@@ -138,9 +138,9 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
 /* probe 'false frontwall return event'  */
 //==== dipswitch setting 100 ====
 void wall_eval(){
-byte trace[10], *p_trc;
-byte spdL, spdR;
-byte i;
+uint8_t trace[10], *p_trc;
+uint8_t spdL, spdR;
+uint8_t i;
 int8_t sq_m;
 int errL, errR;
   sq_m=0;

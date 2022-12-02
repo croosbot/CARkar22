@@ -36,11 +36,11 @@ enum{Lft,Ctr,Rgt};
 unsigned long ms, msref;
 bool edge;
 uint16_t odosum, odoref;
-byte enco0_L, enco0_R;
-byte c_odo, b_odo;
+uint8_t enco0_L, enco0_R;
+uint8_t c_odo, b_odo;
 int8_t straight;
 int8_t rung;    // running
-byte range[3];
-byte rc5_msg;
+uint8_t range[3];
+uint8_t rc5_msg;
 
 #endif

@@ -27,7 +27,7 @@ int n;
   enco0_R=digitalRead(ENC_R);
   redled(0); // redled OFF
   Wire.begin();              // start I2C 
-  n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal bytes
+  n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal uint8_ts
  if(n==1){
   sq_d=Wire.read()&0x7;   // read 3bit switchregister
   Wire.endTransmission();
@@ -49,14 +49,14 @@ int n;
 
 //==== check RC5req for pending rc5_msg ->  Get rc5_msg ===
 bool getRC5(void){
-static byte derate=10;
+static uint8_t derate=10;
 int n, m;
-   n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal bytes
+   n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal uint8_ts
    if(n==1){        // check remote message flag
      m=Wire.read();
      Wire.endTransmission();
      if(m&0x8){                 // ? new remote mmessage
-       n= Wire.requestFrom(RC5_I2C_ADDRESS,1); // aantal bytes
+       n= Wire.requestFrom(RC5_I2C_ADDRESS,1); // aantal uint8_ts
        if(n==1){
          rc5_msg=Wire.read();   // acquire
          Wire.endTransmission();
@@ -70,19 +70,19 @@ int n, m;
 //======= read IR SHARP sensors ==========
 void acq_sensors(void){
 int raw;
-static byte derate=30;
+static uint8_t derate=30;
   raw=analogRead(IRS_L);
   raw= (40000)/raw;
   if(raw > 255) raw=255;          
-  range[0]=(byte)raw;
+  range[0]=(uint8_t)raw;
   raw=analogRead(IRS_C);
   raw= (40000)/raw;
   if(raw > 255) raw=255;          
-  range[1]=(byte)raw;
+  range[1]=(uint8_t)raw;
   raw=analogRead(IRS_R);
   raw= (40000)/raw;
   if(raw > 255) raw=255;          
-  range[2]=(byte)raw;
+  range[2]=(uint8_t)raw;
 }
     
 
@@ -91,8 +91,8 @@ static byte derate=30;
  v=8 -> about straight ahead   v<8 -> turn slightly right   v>8  -> turn slightly left
 */
 
-void ahead(byte cnfg){
-static byte v, sqa;
+void ahead(uint8_t cnfg){
+static uint8_t v, sqa;
 uint16_t itmp;
   if(cnfg){
     if(cnfg==0xFF) sqa=0;  // disable 'ahead'
@@ -113,10 +113,10 @@ uint16_t itmp;
 }
 
 
-void wmove(byte wlft, byte wrgt){
-//static byte tmpl, tmpr;
+void wmove(uint8_t wlft, uint8_t wrgt){
+//static uint8_t tmpl, tmpr;
 //static bool gos;
-byte tmpl, tmpr;
+uint8_t tmpl, tmpr;
 bool gos;
 uint16_t itmp;
   wlft&=0xBF; wrgt&=0xBF;
@@ -135,7 +135,7 @@ uint16_t itmp;
 }
 
 void encoders(void){
-byte enco_L, enco_R;
+uint8_t enco_L, enco_R;
   enco_L=digitalRead(ENC_L);      //PIND kan ook
   if(enco_L!=enco0_L){      // Serial.println(odo_L,DEC);
     if(enco_L) digitalWrite(PROBE,1); else digitalWrite(PROBE,0);
@@ -155,7 +155,7 @@ byte enco_L, enco_R;
 }
 
 void ledBlink(void){ 
-static byte derate=0;
+static uint8_t derate=0;
 static bool onof;
   derate++;
   if(derate > 25){
@@ -166,7 +166,7 @@ static bool onof;
 }
 
 bool button(void){
-static byte sq=0;
+static uint8_t sq=0;
   switch(sq){
     case(0): if(!digitalRead(BUTT)) sq=1; break;
     case(1): if(digitalRead(BUTT)) {sq=0; return(1);}

@@ -3,7 +3,7 @@
 //==== dipswitch setting 000 ====
 void mission_1(){
 uint8_t spd;      
-byte sq_m;
+uint8_t sq_m;
   spd=0x18;
   while(1){
     encoders();
