@@ -41,7 +41,7 @@ int n;
   switch(sq_d){           // dipswitch 0:down  1:up
     case(0): mission_1(); //  000  
     case(1): wall_1();    //  001
-    case(4): wall_eval(); //  100
+    case(4): sharptest(); //  100
     case(5): demo();      //  101
     default: break;
   }  
@@ -168,8 +168,8 @@ static bool onof;
 bool button(void){
 static uint8_t sq=0;
   switch(sq){
-    case(0): if(!digitalRead(BUTT)) sq=1; break;
-    case(1): if(digitalRead(BUTT)) {sq=0; return(1);}
+    case(0): if(!digitalRead(BUTT)) sq=1; break;      // ?pushed
+    case(1): if(digitalRead(BUTT)) {sq=0; return(1);} // ?released
   }
   return(0);
 }
@@ -180,4 +180,14 @@ void redled(bool Nf){
   if(Nf) Wire.write(0x0F);  // redled on
   else Wire.write(0x8F);    // redled off
   Wire.endTransmission();
+}
+
+uint8_t prox(void){
+uint8_t n;
+static uint8_t p;
+    p=0;
+    n= Wire.requestFrom(PROX_I2C_ADDRESS,1); // aantal uint8_ts
+    if(n==1) p=Wire.read();
+    Wire.endTransmission();
+    return(p);
 }

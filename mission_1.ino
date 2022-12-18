@@ -54,7 +54,7 @@ uint8_t sq_m;
 void demo(){
 bool togg=0;
 uint8_t sq;
-uint8_t range_p;
+uint8_t range0;
    while(1){
     ms=millis();
     if(ms > msref){
@@ -75,18 +75,38 @@ uint8_t range_p;
       switch(sq){
         case(0): break;
         case(0xFE): acq_sensors();                  // show left sensor
-                      if(range_p != range[Lft]) Serial.println(range[0]);
-                      range_p=range[Lft]; break;
+                      if(range0 != range[Lft]) Serial.println(range[0]);
+                      range0=range[Lft]; break;
         case(0xFD): acq_sensors();                  // show centre sensor
-                      if(range_p != range[Ctr]) Serial.println(range[1]);
-                      range_p=range[Ctr]; break;
+                      if(range0 != range[Ctr]) Serial.println(range[1]);
+                      range0=range[Ctr]; break;
         case(0xFC): acq_sensors();                  // show right sensor
-                      if(range_p != range[Rgt]) Serial.println(range[2]);
-                      range_p=range[Rgt]; break;
+                      if(range0 != range[Rgt]) Serial.println(range[2]);
+                      range0=range[Rgt]; break;
         default: break;              
       }
     } // end ms
   } // end while  
 }
 
+/* sharp sensor saturationtest
+  redled ON when range[x] < 80
+  x=Lft|Ctr|Rgt  */
+  
+//==== dipswitch setting 100 ====
+void sharptest(void){
+uint8_t p;
+    while(1){
+      ms=millis();
+      if(ms > msref){
+        msref=ms+30;
+        ledBlink();
+//        acq_sensors();
+//        if((range[Lft] < 80) || (range[Ctr] <80) || (range[Rgt] <80)) redled(1); else redled(0);
+        p=prox();
+        if(p&0x3) redled(1); else redled(0);
+       Serial.println(p);
+      }
+    }  
+}
  
