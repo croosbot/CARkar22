@@ -101,10 +101,10 @@ uint8_t p;
       if(ms > msref){
         msref=ms+30;
         ledBlink();
-//        acq_sensors();
-//        if((range[Lft] < 80) || (range[Ctr] <80) || (range[Rgt] <80)) redled(1); else redled(0);
+        acq_sensors();
+        if((range[Lft] < 80) || (range[Ctr] <80) || (range[Rgt] <80)) redled(1); else redled(0);
         p=prox();
-        if(p&0x3) redled(1); else redled(0);
+//        if(p&0x3) redled(1); else redled(0);
        Serial.println(p);
       }
     }  
