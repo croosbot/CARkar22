@@ -2,6 +2,7 @@
 <p>differential wheeldrive<br>
 Arduino Uno processorboard -ATMEGA328 uproc<br>
 sharp GP2Y0A60SZLF ranging sensors (3)<br>
+TSSP77038 front wide angle proximity sensors (2) <br>
 RC5 remote control<br>  
 4 quadrant encoders !!<br>
 2S Lipo battery 1000 mAh<br>
