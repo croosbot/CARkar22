@@ -1,7 +1,6 @@
 #include "carkar.h"
 
-//#define limHi 0x30
-//#define limLo 0xA
+
 // range[x]  [40..255]
 //==== dipswitch setting 001 ====
 void wall_1(){
