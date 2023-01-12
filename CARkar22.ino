@@ -5,7 +5,6 @@
 #include <Wire.h>
 #include "carkar.h"
 
-//static int sq_d;      //dispatch
 byte sq_d;              //dispatch
 
 void setup() {

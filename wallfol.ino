@@ -1,11 +1,13 @@
 #include "carkar.h"
 
 
+
+#define PROX 90
 // range[x]  [40..255]
 //==== dipswitch setting 001 ====
 void wall_1(){
 uint8_t spdL, spdR;
-uint8_t tmp;
+uint8_t tmp, c_frnt;
 int8_t rangeL0, rangeR0, sq_m, dervL, dervR;
 int errLS, errRS;   // error LeftSide,RightSide
 int kP, kD;
@@ -58,11 +60,12 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
                     O_Set(100);
                     if(range[Lft] < range[Rgt]) sq_m=1; else sq_m=2;
                   }break;
-       case(1): if(MoveRdy)sq_m=3; break;
-       case(2): if(MoveRdy)sq_m=8; break;       
+       case(1): if(MoveRdy){c_frnt=5; sq_m=3;} break;
+       case(2): if(MoveRdy){c_frnt=5; sq_m=8;} break;       
 //===== track on the leftside wall
-       case(3): if(range[Ctr] < 80){wmove(0x0,0x0); sq_m=4; break;} // stop by front
-                if(errLS){    /* error LeftSide */
+       case(3): if((range[Ctr] < PROX) && c_frnt) c_frnt--; else c_frnt=5;
+                if(c_frnt==0){wmove(0x0,0x0); sq_m=4; break;}       // stop by front
+                if(errLS){                            /* error LeftSide */
                   spdL=0x18-errLS;
                   if(dervL > 0) spdL += dervL;
                   else if(dervL < 0){
@@ -77,9 +80,6 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
                   }else if(dervL <0) spdR-=dervL;
                   wmove(spdL,spdR);
                 } else wmove(0x18,0x18);
- //               if(!sel_Pd){
- //                 Serial.print(spdL); Serial.print("  "); Serial.print(spdR);
- //                 Serial.print("  "); Serial.println(dervL);}
                 break;
        case(4): if(Halted) sq_m=5; break;
        case(5): wmove(0x11,0x91);
@@ -91,11 +91,12 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
                    sq_m=7;               
                 }break;
        case(7): if(Halted){
-                  wmove(0x18,0x18); sq_m=8;
+                  wmove(0x18,0x18); c_frnt=5; sq_m=8;
                 }break;
 //===== track on the rightside wall             
-       case(8): if(range[Ctr] < 80){wmove(0x0,0x0); sq_m=9; break;}   // stop by front
-                if(errRS){    /* error RightSide  */
+       case(8): if((range[Ctr] < PROX) && c_frnt) c_frnt--; else c_frnt=5;
+                if(c_frnt==0){wmove(0x0,0x0); sq_m=9; break;}       // stop by front
+                if(errRS){                                    /* error RightSide  */
                     spdL=0x18+errRS;      // proportional error
                     if(dervR > 0){
                       if(dervR >= spdL) spdL=2;
@@ -111,9 +112,6 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
                     }
                     wmove(spdL,spdR);
                  } else wmove(0x18,0x18);
- //                if(!sel_Pd){
- //                 Serial.print(spdL); Serial.print("  "); Serial.print(spdR);
- //                 Serial.print("  "); Serial.println(dervL);}
                  break;
         case(9): if(Halted) sq_m=10; break;
         case(10): wmove(0x11,0x91);
@@ -125,7 +123,7 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
                     sq_m=12;               
                  }break;
         case(12): if(Halted){
-                  wmove(0x18,0x18); sq_m=3;
+                  wmove(0x18,0x18); c_frnt=5;  sq_m=3;
                   }break;
         case(20): if(MoveRdy) sq_m=8; break;         
        } // end switch  

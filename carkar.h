@@ -2,7 +2,7 @@
 // carkar.h
 // 06-10-2022
 // O_Set(200) :: 360 dgr rotate
-// O_Set(900) :: 140 cm
+// O_Set(s) :: 3.14mm/lsb straight
 
 #ifndef __carkar_h
 #define __carkar_h
