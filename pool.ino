@@ -19,11 +19,10 @@ uint8_t sq_m, sq_b;
 uint8_t sq_m0;    // probe
 uint8_t prity, prity0;
 uint8_t i, mask, mask0, X, susp;   // X manage task_end
-bool acquire, s;            // style, copy
+bool s;    // style
   spd=0x18;
   prity=0;
   prity0=0xFF;
-  acquire=0;
   sq_m=sq_b=0;
   sq_m0=0xFF;     // trace
   escm=0x1;
@@ -50,28 +49,23 @@ bool acquire, s;            // style, copy
           mask=mask >> 1;
         }
         prity0=prity;
-        Serial.println(prity);
+//        Serial.println(prity);
       }
-      if(sq_m != sq_m0){Serial.print("   "); Serial.println(sq_m); sq_m0=sq_m;}
+//      if(sq_m != sq_m0){Serial.print("   "); Serial.println(sq_m); sq_m0=sq_m;}
       switch(sq_b){
         case(0): if(button()){prity=1; sq_b=1;} break;
         case(1): if(button()){
-                    wmove(0x0,0x0); acquire=0; prity=0; X=0; mask0=0x80; sq_m=sq_b=0;} break;              
+                    wmove(0x0,0x0); prity=0; X=0; mask0=0x80; sq_m=sq_b=0;} break;              
       }
        switch(sq_m){
         case(0): break;                                               // idle
-        case(10): X=0; wmove(0x12,0x12); acquire=1; sq_m=0; break;    // pr level 1
+        case(10): X=0; wmove(0x12,0x12); sq_m=0; break;    // pr level 1
         case(20): break;    // priority level 2
         case(30): break;    // priority level 3
-#if 0
-        case(40): X|=0x8; redled(1); susp=50; sq_m=41; break;
-        case(41): susp--; if(susp==0){redled(0); X &= ~0x8; sq_m=0;}break;
-#else
         case(40): if(s) wmove(0xA,0x14); else wmove(0x14,0xA);
-                  X|=0x8; O_Set(60); sq_m=41; break;                              // exec pr level 4
-        case(41): if(MoveRdy) {X &= ~0x8; /*wmove(0x12,0x12);*/ sq_m=0;} break; 
-#endif       
-        case(50): /*Serial.println(2);*/ X|=0x10; wmove(0x92,0x92); O_Set(50); sq_m=51; break;             // exec pr level 5
+                  X|=0x8; O_Set(60); sq_m=41; break;                      // exec pr level 4
+        case(41): if(MoveRdy) {X &= ~0x8; sq_m=0;} break; 
+        case(50): X|=0x10; wmove(0x92,0x92); O_Set(50); sq_m=51; break;   // exec pr level 5
         case(51): if(MoveRdy){
                     if(esc & escm) wmove(0x0,0x92); else wmove(0x92,0x0);
                     if(escm==0x8000) escm=0x1; else escm=escm << 1;
@@ -81,24 +75,19 @@ bool acquire, s;            // style, copy
         default: break;                 
      } // end switch
 /*=========== sensor events ===========*/
-      if(acquire){
+      if(sq_b){   // ? /standby
         acq_sensors();
         if(prox() && !(prity & 0x10)){prity |= 0x10;} else if(!(X&0x10)) prity &= ~0x10;  // activate level 5
- #if 1       
-        if(range[Lft] < 130) {prity |= 0x8; s=0;}                           // activate level 4
-        else if(range[Rgt] < 130) {prity |= 0x8; s=1;}                      // activate level 4
+        if(!(prity&0x8)){
+          if(range[Lft] < 130) {prity |= 0x8; s=0;}                        // activate level 4
+          else if(range[Rgt] < 130) {prity |= 0x8; s=1;}                   // activate level 4
+        }
         else if (!(X&0x8)) prity &= ~0x8;
- #endif
- #if 0
-         if(rc5_msg==0xFF){prity|=0x8; rc5_msg=0;} else if(!(X&0x8)) prity &= ~0x8;
- #endif 
       }
     } // end ms
   } // end while
-  ;
 }
 
-//        case(52): if(MoveRdy){b_odo=0; prity &= 0x1; sq_m=0;} break;               //  restore pr level 1
 
 //==== dipswitch setting 000 ====
 void shuttle(){
@@ -162,6 +151,7 @@ uint8_t range0;
       msref=ms+30;
       ledBlink();
       acq_sensors();
+      prox();             // bumpers
       if(getRC5()){
         if(rc5_msg==0xFF){
            togg=!togg;
@@ -196,7 +186,6 @@ uint8_t range0;
   
 //==== dipswitch setting 100 ====
 void sharptest(void){
-uint8_t p;
     while(1){
       ms=millis();
       if(ms > msref){
@@ -204,10 +193,34 @@ uint8_t p;
         ledBlink();
         acq_sensors();
         if((range[Lft] < 80) || (range[Ctr] <80) || (range[Rgt] <80)) redled(1); else redled(0);
-        p=prox();
-//        if(p&0x3) redled(1); else redled(0);
-       Serial.println(p);
       }
-    }  
+   }  
 }
+
+//==== dipswitch setting 011 ===
+void linetest(void){
+uint8_t sts, i;
+bool acq;  
+uint8_t linedat[10], *p_linedat;
+      while(1){
+      ms=millis();
+      if(ms > msref){
+        msref=ms+100;
+        if(button()) acq = !acq; 
+        ledBlink();
+        if(acq){
+          p_linedat=linedat;
+          sts= Wire.requestFrom(LINE_I2C_ADDRESS,9);
+          while(Wire.available()) {
+            *p_linedat++ = Wire.read();
+          }
+            for(i=1 ; i < 8 ; i++){
+            Serial.print(linedat[i]); Serial.print(" ");
+          }
+          Serial.println(linedat[8]);
+        }   
+      }
+   } 
+}  
+
  

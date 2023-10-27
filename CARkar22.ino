@@ -42,6 +42,7 @@ int n;
     case(0): shuttle();   //  000  
     case(1): wall_1();    //  001
     case(2): shuffle();   //  010
+    case(3): linetest();
     case(4): sharptest(); //  100
     case(5): demo();      //  101
     default: break;

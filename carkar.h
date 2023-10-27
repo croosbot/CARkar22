@@ -12,6 +12,7 @@ typedef unsigned int uint;
 #define PCF8574_I2C_ADDRESS 0x20
 #define RC5_I2C_ADDRESS 0x0B
 #define PROX_I2C_ADDRESS 0xD
+#define LINE_I2C_ADDRESS 0xA
 #define TCCR2B _SFR_MEM8(0xB1)
 #define MoveRdy b_odo & 0x1
 #define O_Set(x) odoref=odosum +(x); b_odo=0
