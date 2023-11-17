@@ -198,29 +198,105 @@ void sharptest(void){
 }
 
 //==== dipswitch setting 011 ===
-void linetest(void){
-uint8_t sts, i;
-bool acq;  
-uint8_t linedat[10], *p_linedat;
-      while(1){
-      ms=millis();
-      if(ms > msref){
-        msref=ms+100;
-        if(button()) acq = !acq; 
+void LineFol(void){
+uint8_t sts, i, sq0;   // wheelRightExtra
+uint16_t tmp;
+bool go, mov;  
+uint8_t ld[10], *p_ld, ipol, kk;
+int8_t nn, nn0;
+int16_t errr, errr0, derv;
+    errr=go=sq0=0;
+    errr0=0x80;
+    while(1){
+       ms=millis();
+       if(ms > msref){
+        msref=ms+40;
+        if(getRC5()){
+           Serial.println(rc5_msg);
+        }
+        if(button()) go = !go;
         ledBlink();
-        if(acq){
-          p_linedat=linedat;
+        if(go){
+          mov=1;
+          p_ld=ld;
           sts= Wire.requestFrom(LINE_I2C_ADDRESS,9);
-          while(Wire.available()) {
-            *p_linedat++ = Wire.read();
+            while(Wire.available()) {
+              *p_ld++ = Wire.read();
+            }
+            p_ld=&ld[1];
+            for(i=1;i<9;i++){       // ld[0]..ld[7] sensorArray
+              *(p_ld-1)=*p_ld;
+              *p_ld++;
+            }
+            for(i=0 ; i < 8 ; i++){   //compliant HCC
+              tmp=ld[i];
+              if(tmp > 29) tmp -= 30; else tmp= 0;
+              tmp *= 170;
+              tmp /= 220;
+              tmp += 80;
+              ld[i] = (uint8_t) tmp;   
+            }
+            for(i=0; i<8; i++){       // black line -> high output 
+              ld[i]=256-ld[i];
+            }
+//            for(i=0; i<7; i++){
+//              Serial.print(ld[i]);
+//              Serial.print("   ");
+//            }
+//            Serial.println(ld[7]);
+            sq0=1;
+            for(i=0;i<8;i++){
+              if(ld[i] > 12) break;
+              sq0++;              
+            }
+ //           Serial.println(sq0);
+            ipol=0;
+            kk=0;
+            switch(sq0){
+              case(1):  if((ld[2] <15) && (ld[3] <15)) kk=1;
+                        if((ld[0] >170) && (ld[1] <80) && kk) break;
+                        else if ((ld[1] > 160) && kk) ipol=1;
+                        else if ((ld[0] > 160) && (ld[1] > 160) && (ld[3] < 15)) ipol=2;
+                        else if ((ld[3] < 60) && (ld[1] > 60) && !kk) ipol=3;
+                        break;    
+              case(2):  if(ld[1] < 100) ipol=1; break;
+              case(3):  if(ld[2] < 120) ipol=1; break;
+              case(4):  if(ld[3] < 130) ipol=1; break;
+              case(5):  if(ld[4] < 130) ipol=1; break;
+              case(6):  if(ld[5] < 130) ipol=1; break;
+              case(7):  if(ld[6] < 160) ipol=1; break;
+              default:  break;        // out of range ????????
           }
-            for(i=1 ; i < 8 ; i++){
-            Serial.print(linedat[i]); Serial.print(" ");
+          nn=(int8_t)sq0;   // 1...9
+          if(nn==1){
+              nn += ipol;
+          }else if(nn < 10){    // (2-1)*2 =2 || (2-1)*2 + ipol =3 || (3-1)*2 =4  etc.
+              nn-=1;
+              nn*=2;            
+              nn += ipol;
+              nn += 3;          // scale range 1..17
           }
-          Serial.println(linedat[8]);
-        }   
-      }
-   } 
+          errr=(int16_t)nn-9;      //   scale range -8..0..+8
+//          Serial.print(nn); Serial.print("  "); Serial.println(errr);
+          derv=errr-nn0;
+          derv*=8;
+//          Serial.print(derv);Serial.print("  "); Serial.print(errr);Serial.print("  "); Serial.println(nn0);
+          nn0=errr;
+  
+//          Serial.print(errr); Serial.print("  "); Serial.println(errr0);
+//            if(errr0 != errr){
+                errr0=errr;
+                errr *= 15;
+                errr /= 5;
+//                Serial.print(80+errr); Serial.print("  "); Serial.println(80+errr+derv);
+                analogWrite(PWML, 80-(int8_t)errr -(int8_t) derv );
+                analogWrite(PWMR, 88+(int8_t)errr + (int8_t)derv);
+//          }
+       }else{
+          if(mov){analogWrite(PWML, 0); analogWrite(PWMR, 0); mov=0;} // end go         
+       }
+    }     // end ms 
+  }       // end while
 }  
 
  

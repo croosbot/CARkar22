@@ -27,16 +27,20 @@ bool ONoff, sel_Pd; // select 1:kP 0:kD
       msref=ms+30;
       if(getRC5()){
         Serial.println(rc5_msg);
-        if(rc5_msg==254) ONoff=!ONoff;
-        if(rc5_msg==255){
+        if(rc5_msg==254) ONoff=!ONoff;      // not used
+        if(rc5_msg==255){     // red
           sel_Pd=!sel_Pd;
           redled(sel_Pd);     // on:kP  off:kD         
         }else if(sel_Pd){
-          kP=rc5_msg;
-          Serial.print("kP"); Serial.println(kP);
+          if (rc5_msg < 16){
+            kP=rc5_msg;
+            Serial.print("kP"); Serial.println(kP);
+          }  
         }else{
-          kD=rc5_msg;
-          Serial.print("kD"); Serial.println(kD);
+          if (rc5_msg < 16){
+            kD=rc5_msg;
+            Serial.print("kD"); Serial.println(kD);
+          }  
         }
       }      
       if(rung) rung--; // running
