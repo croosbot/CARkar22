@@ -10,7 +10,6 @@ byte sq_d;              //dispatch
 void setup() {
 int n;
  Serial.begin(9600);          // start serial
- // Serial.begin(115200);     // start serial
   pinMode(LED, OUTPUT);       // led pin op output
   pinMode(DIRL, OUTPUT);       
   pinMode(DIRR, OUTPUT);   
