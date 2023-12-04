@@ -398,6 +398,41 @@ int16_t prfl;
 }
 
 
+void scanraw(void){
+bool togg, go;
+uint8_t sts, i;
+uint8_t ld[8], *p_ld;
+    go=false;
+    togg=false;
+    while(1){
+      ms=millis();
+      if(ms > msref){
+      msref=ms+50;
+      if(getRC5()){
+        if(rc5_msg==0xFF){
+          togg=!togg;
+          redled(togg);
+        }
+      }     
+      if(button()) go = !go;
+      if(go){
+        p_ld=&ld[0];
+        sts= Wire.requestFrom(LINE_I2C_ADDRESS,9);
+        while(Wire.available()) {
+          *p_ld++ = Wire.read();
+        }
+        ledBlink();
+        p_ld=&ld[1];
+        if(togg){
+          for(i=0;i<7;i++){
+            Serial.print(*p_ld++); Serial.print("  ");            
+          }
+          Serial.println(*p_ld);
+        }
+      } // end go
+    } // end msec
+  }   // end while
+}
  #if 0
 void LineFol(void){       // LEFT SIDE TRACKING
 uint8_t getErrL(uint8_t *, bool);

@@ -41,9 +41,10 @@ int n;
     case(0): shuttle();   //  000  
     case(1): wall_1();    //  001
     case(2): shuffle();   //  010
-    case(3): LineFol();
+    case(3): LineFol();   //  011
     case(4): sharptest(); //  100
     case(5): demo();      //  101
+    case(6): scanraw();   //  110
     default: break;
   }  
 }
