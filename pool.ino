@@ -274,7 +274,7 @@ uint8_t getErr(uint8_t *p_px, bool L_r){      // pointer naar pixel
 uint8_t sq0, i, ipol, nn=0;
 int16_t prfl;
   sq0=1;  
-  if(L_r){      // TRACK LEFTSIDE VERSION    
+  if(L_r){      // TRACK LEFT LINESIDE VERSION    
       for(i=7; i>0 ;i--){
         if(*(p_px+i) > 100) break;
         sq0++;              
@@ -339,7 +339,7 @@ int16_t prfl;
         nn += 2;          // scale range 1..17
         nn=30-nn;
     }
-  }else{    // TRACK RIGHTSIDE VERSION        
+  }else{    // TRACK RIGHT LINESIDE VERSION        
     for(i=0;i<7;i++){
       if(*(p_px+i) > 100) break;
       sq0++;              
@@ -397,7 +397,7 @@ int16_t prfl;
     return(nn);
 }
 
-
+/*=== scan raw sensordata ===*/ 
 void scanraw(void){
 bool togg, go;
 uint8_t sts, i;
@@ -433,71 +433,4 @@ uint8_t ld[8], *p_ld;
     } // end msec
   }   // end while
 }
- #if 0
-void LineFol(void){       // LEFT SIDE TRACKING
-uint8_t getErrL(uint8_t *, bool);
-const uint8_t offs[8]={175,200,200,200,235,218,210,185};  
-uint8_t sts, i, sq0;
-uint16_t tmp, pixsum;
-bool go, mov;  
-uint8_t ld[10], *p_ld, ipol;
-int8_t nn, /*nn0,*/ motPwr;
-int16_t prfl;   // profile
-int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
-    p_ld=&ld[0];
-    errr=go=sq0=0;
-    hdg0=0x80;
-    kP=14;
-    kD=15;
-    go=false;
-    motPwr=95;
-    while(1){
-      ms=millis();
-      if(ms > msref){
-        msref=ms+40;
-        if(getRC5()){
-           Serial.println(rc5_msg);
-           kD=rc5_msg;
-        }
-        if(button()) go = !go;
-        ledBlink();
-        if(go){
-          mov=1;
-          p_ld=ld;
-          pixsum=0;
-          sts= Wire.requestFrom(LINE_I2C_ADDRESS,9);
-          while(Wire.available()) {
-            *p_ld++ = Wire.read();
-          }
-          p_ld=&ld[1];
-          for(i=1;i<9;i++){       // ld[0]..ld[7] sensorArray
-            *(p_ld-1)=*p_ld;
-            p_ld++;
-          }
-          for(i=0; i<8; i++){       // black line -> high output
-            if(offs[i] >= ld[i])  
-            ld[i]=offs[i]-ld[i];
-            else ld[i]=0;              
-          }
-          p_ld=&ld[0];
-          errr=(int16_t)getErr(p_ld,1);
-          errr-=14;
-          derv=errr-errr0;
-          errr0=errr;
-          derv*=kD;          
-          errr *= kP;
-          errr /= 5;
-          hdg=errr+derv;
-          if(hdg != hdg0){
-            hdg0=hdg;
-            analogWrite(PWML, motPwr - (int8_t)hdg);
-            analogWrite(PWMR, motPwr + (int8_t) hdg + 8);   // + straight compensation
-          }
-       }else{
-          if(mov){analogWrite(PWML, 0); analogWrite(PWMR, 0); mov=0;} // end go         
-       }  // end go
-    }     // end ms 
-  }       // end while
-}   
  
-#endif
