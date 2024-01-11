@@ -19,7 +19,8 @@ uint8_t sts, i;
 bool togg, Lr; 
 uint8_t ld[10], *p_ld, ipol;
 int8_t motPwr;
-int16_t tmp, hdg, hdg0, errr, errr0, derv, kP, kD;
+int16_t tmp, errr, errr0, derv, kP, kD;
+int8_t hdg, hdg0;
     togg=0;
     xdet=0;
     sqm0=1;
@@ -77,7 +78,10 @@ int16_t tmp, hdg, hdg0, errr, errr0, derv, kP, kD;
         else if(derv > 80) derv = 80;    // limit derivative
         errr *= kP;
         errr /= 5;
-        hdg=errr+derv;
+        tmp=errr+derv;
+        hdg=(int8_t)tmp;    
+        if(hdg > (245- motPwr)) hdg = 245-motPwr;    // clip overrange
+        if(hdg > (motPwr-5)) hdg=motPwr-5;           // clip negative motPwr
 //        if(sqm){
 //          for(i=0;i<7;i++){
 //            Serial.print(ld[i]); Serial.print("  ");
@@ -95,8 +99,8 @@ int16_t tmp, hdg, hdg0, errr, errr0, derv, kP, kD;
                    }
                    if(hdg != hdg0){
                       hdg0=hdg;
-                      analogWrite(PWML, motPwr - (int8_t)hdg);
-                      analogWrite(PWMR, motPwr + (int8_t) hdg + 8);
+                      analogWrite(PWML, motPwr - hdg);
+                      analogWrite(PWMR, motPwr + hdg + 8);
                    } break;
           case(2): if(node(nop, hdg)) sqm=6; break;
           
@@ -108,8 +112,8 @@ int16_t tmp, hdg, hdg0, errr, errr0, derv, kP, kD;
                     }
                     if(hdg != hdg0){
                       hdg0=hdg;
-                      analogWrite(PWML, motPwr - (int8_t)hdg);
-                      analogWrite(PWMR, motPwr + (int8_t) hdg + 8);
+                      analogWrite(PWML, motPwr - hdg);
+                      analogWrite(PWMR, motPwr + hdg + 8);
                     } break;
           case(7):  if(node(nop, hdg)) sqm=10; break;          
                  
@@ -117,8 +121,8 @@ int16_t tmp, hdg, hdg0, errr, errr0, derv, kP, kD;
           case(10):  if(xdet & 0x2){sqm=0x80; break;}
                       if(hdg != hdg0){
                       hdg0=hdg;
-                      analogWrite(PWML, motPwr - (int8_t)hdg);
-                      analogWrite(PWMR, motPwr + (int8_t) hdg + 8);
+                      analogWrite(PWML, motPwr - hdg);
+                      analogWrite(PWMR, motPwr + hdg + 8);
                     } break;
           case(0x80): wmove(0x0,0x0);
                       sqm=0;
