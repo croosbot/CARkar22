@@ -1,8 +1,17 @@
 
+/*
+      refer carkar.h and set
+      DISSEL  0 for standard
+      DISSEL  1 for dissel compliant
+
+*/
+
 //==== dipswitch setting 011 ===
 void LineFol(void){             // LEFT/RIGHT TRACKING   Lr 1:Left   0:Right
 uint8_t getErr(uint8_t *, bool);
-uint8_t nodes(uint8_t *, bool);
+uint8_t ntype(uint8_t *, bool);   // node type
+uint8_t node(uint8_t, uint16_t);   // node handle
+uint8_t dissel;
 uint8_t xdet;           // node_statusbyte  [0] finish  [1] linecrossdetect
 uint8_t sqm, sqm0;      // master sequencer        
 const uint8_t offs[8]={175,200,200,200,235,218,210,185};  
@@ -10,7 +19,7 @@ uint8_t sts, i;
 bool togg, Lr; 
 uint8_t ld[10], *p_ld, ipol;
 int8_t motPwr;
-int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
+int16_t tmp, hdg, hdg0, errr, errr0, derv, kP, kD;
     togg=0;
     xdet=0;
     sqm0=1;
@@ -20,6 +29,7 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
     kP=14;
     kD=16;        //  mod 09-12-23  (15)
     motPwr=105;   //  ~50cm/sec      mod 09-12-23 (95)
+    dissel=DISSEL;
     Serial.println("START");
     while(1){
       encoders();
@@ -48,7 +58,14 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
         for(i=0; i<8; i++){       // black line -> high output
           if(offs[i] >= ld[i])  
             ld[i]=offs[i]-ld[i];
-          else ld[i]=0;              
+          else ld[i]=0;
+          if(dissel){             // comply 'dissel' with 'standard'
+            tmp=(int16_t)ld[i];
+            tmp*=12;
+            tmp/=10;
+            if(tmp > 255) tmp=255;
+            ld[i]=uint8_t(tmp);            
+          }                        
         }
         p_ld=&ld[0]; 
         errr=(int16_t)getErr(p_ld,Lr);
@@ -71,8 +88,9 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
         switch(sqm){
           case(0): if(button()) sqm=1; break;
           case(1): if(xdet & 0x1) {        //==== FIRST CROSSING ===
-                      wmove(0x0,0x90);
-                      O_Set(0x7); sqm=2;    // some backtrack leftwheel
+//                    node(xrght, hdg);
+                      node(xlft, hdg);
+                      sqm=2;  
                       break; 
                    }
                    if(hdg != hdg0){
@@ -80,25 +98,12 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
                       analogWrite(PWML, motPwr - (int8_t)hdg);
                       analogWrite(PWMR, motPwr + (int8_t) hdg + 8);
                    } break;
-          case(2): if(MoveRdy){           // start CW rotation
-                        wmove(0x10,0x90);
-                        O_Set(0x12);
-                        sqm=3;
-                     } break;
-          case(3): if(MoveRdy) sqm=4;
-                    break;
-          case(4): if(hdg > 0){            // CW while heading negative
-                      wmove(0x14,0x15);   // (0x14,0x15) -> extra to top rotation
-                      O_Set(0x3);
-                      sqm=5;
-                   } break;
-          case(5): if(MoveRdy){sqm=6; break;}
-                      
-/* first linecrossing done, proceed   */
-
+          case(2): if(node(nop, hdg)) sqm=6; break;
+          
           case(6): if(xdet & 0x1) {        // === SECOND CROSSING ===
-                      wmove(0x0,0x90);
-                      O_Set(0x7); sqm=7;  // wheelbase on x centre   
+//                    node(xrght, hdg);
+                      node(xlft, hdg);
+                      sqm=7;  
                       break; 
                     }
                     if(hdg != hdg0){
@@ -106,22 +111,11 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
                       analogWrite(PWML, motPwr - (int8_t)hdg);
                       analogWrite(PWMR, motPwr + (int8_t) hdg + 8);
                     } break;
-          case(7): if(MoveRdy){             // 2
-                      wmove(0x10,0x90);
-                      O_Set(0x12);          // rotate 56 dgr CW
-                      sqm=8;
-                     } break;
-          case(8): if(MoveRdy) sqm=9;
-                    break;                    
-          case(9): if(hdg > 0){            // CW while heading negative
-                      wmove(0x14,0x15);  // 14,14
-                      O_Set(0x3);
-                      sqm=10;
-                   }                    
-                   break; 
+          case(7):  if(node(nop, hdg)) sqm=10; break;          
+                 
 /* second linecrossing done, proceed to finish   */                    
           case(10):  if(xdet & 0x2){sqm=0x80; break;}
-                    if(hdg != hdg0){
+                      if(hdg != hdg0){
                       hdg0=hdg;
                       analogWrite(PWML, motPwr - (int8_t)hdg);
                       analogWrite(PWMR, motPwr + (int8_t) hdg + 8);
@@ -131,12 +125,12 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
                       break;
        }
        if(sqm && button()) sqm=0x80;      // button stop
-       if(sqm) xdet=nodes(p_ld, Lr); else xdet=0;
+       if(sqm) xdet=ntype(p_ld, Lr); else xdet=0;
     }     // end ms 
   }       // end while
 }         // end LineFol
   
-// xdet[n]        evaluate nodes  
+// xdet[n]        evaluate node type  
 // [7]
 // [6]
 // [5]
@@ -148,7 +142,7 @@ int16_t hdg, hdg0, errr, errr0, derv, kP, kD;
 
 // holdoff: suppress successive xdet events for 1 second when triggered
 
-uint8_t nodes(uint8_t *p_px, bool Lr){
+uint8_t ntype(uint8_t *p_px, bool Lr){
 static uint8_t holdoff=0, strght=0, more=0;
 static uint8_t sqn=0;
 static uint8_t px0_0, px7_0;
@@ -181,6 +175,38 @@ uint8_t xdet;
   return(xdet);  
 }
 
+uint8_t node(uint8_t type, uint16_t hdg){
+static uint8_t sqn=0;
+static uint8_t sqn0=0x80;
+  if(type) sqn=type;
+  switch(sqn){
+    case(nop): return(0); break;
+    case(xrght): wmove(0x0, 0x90); O_Set(0x7); sqn=10; break;
+    case(xlft): wmove(0x90, 0x0); O_Set(0x7); sqn=20; break;
+    case(trgt150): break;
+    case(tlft150): break;
+    case(trgt160): break;
+    case(tlft160): break;
+    
+    case(10): if(MoveRdy){                    // X turn right
+                wmove(0x10,0x90); O_Set(0x12); sqn=11;
+               } break;
+    case(11): if(MoveRdy) sqn=12; break;
+    case(12): if(hdg > 0){
+               wmove(0x14,0x15); O_Set(0x3); sqn=13;
+              } break;
+    case(13): if(MoveRdy){sqn=nop; return(1);} break;
+
+    case(20): if(MoveRdy) {wmove(0x90,0x10); O_Set(0x48); sqn=21;} break;
+    case(21): if(MoveRdy){
+                wmove(0x14,0x14); O_Set(8); sqn=22;}
+                break;
+    case(22): if(MoveRdy){wmove(0x0,0x0); return(1);}
+                break;                
+    default: break;
+  }
+  return(0);  
+}
 /*
  lineError range  -13..0..13
  linesensor provides a linear 8 bytes array  pointed by *p_px    *(p_px+0) ..*(p_px+7)
@@ -202,39 +228,38 @@ int16_t prfl;
       ipol=4;
       switch(sq0){
         case(1):  prfl=210 + *(p_px+7) - *(p_px +4)- *(p_px+5);
-                  if(prfl > 336) ipol=1;
-                  else if(prfl > 290) ipol=2;
-                  else if(prfl > 215) ipol=3;
-                  else if(prfl > 113) ipol=4;              
+                  if(prfl > 325) ipol=1;
+                  else if(prfl > 250) ipol=2;
+                  else if(prfl > 145) ipol=3;
                   break;    
         case(2):  prfl=160 + *(p_px+6)+ *(p_px+7) - *(p_px+3) -*(p_px+4);
-                  if(prfl > 250) ipol=1;
-                  else if(prfl > 180) ipol=2;
-                  else if(prfl > 100) ipol=3;
-                  break;
-        case(3):  prfl=150 + *(p_px+5) + *(p_px+6) -*(p_px+2) - *(p_px+3);
-                  if(prfl > 280) ipol=1;
-                  else if(prfl > 170) ipol=2;
+                  if(prfl > 240) ipol=1;
+                  else if(prfl > 160) ipol=2;
                   else if(prfl > 80) ipol=3;
                   break;
+        case(3):  prfl=150 + *(p_px+5) + *(p_px+6) -*(p_px+2) - *(p_px+3);
+                  if(prfl > 285) ipol=1;
+                  else if(prfl > 200) ipol=2;
+                  else if(prfl > 105) ipol=3;
+                  break;
         case(4):  prfl=80 + *(p_px+4) + *(p_px+5) -*(p_px+2);
-                  if(prfl > 245) ipol=1;
-                  else if(prfl > 175) ipol=2;
+                  if(prfl > 240) ipol=1;
+                  else if(prfl > 170) ipol=2;
                   else if(prfl > 100) ipol=3;
                   break;
         case(5): prfl=80 + *(p_px+3) + *(p_px+4) -*(p_px+1);
-                  if(prfl > 270) ipol=1;
+                  if(prfl > 260) ipol=1;
                   else if(prfl > 180) ipol=2;
                   else if(prfl > 100) ipol=3;
                   break;
         case(6):  prfl=60 + *(p_px+2) + *(p_px+3)- *(p_px+0);
-                  if(prfl > 212) ipol=1;
-                  else if(prfl > 124) ipol=2;
-                  else if(prfl > 73) ipol=3;
+                  if(prfl > 205) ipol=1;
+                  else if(prfl > 135) ipol=2;
+                  else if(prfl > 60) ipol=3;
                   break;
         case(7):  prfl=10 + *(p_px+2);
-                  if(prfl > 80) ipol=1;
-                  else if(prfl > 60) ipol=2;
+                  if(prfl > 60) ipol=1;
+                  else if(prfl > 40) ipol=2;
                   else ipol=3;                        
                   break;
         default:  break;
@@ -257,41 +282,41 @@ int16_t prfl;
       sq0++;              
     }
     if(sq0 > 7) sq0=7;
-    ipol=0;
+    ipol=1;
     switch(sq0){
       case(1):  prfl=150 + *(p_px+3) + *(p_px+2) - *p_px;
                 if(prfl > 215) ipol=4;
                 else if(prfl > 150) ipol=3;
                 else if(prfl > 90) ipol=2;
-                else if(prfl > 50) ipol=1;              
-                break;    
+                 break;    
       case(2):  prfl=250 + *(p_px+3) - *(p_px+1) - *p_px;
-                if(prfl > 290) ipol=3;
-                else if(prfl > 210) ipol=2;
-                else if(prfl > 120) ipol=1;
+                if(prfl > 260) ipol=4;
+                else if(prfl > 190) ipol=3;
+                else if(prfl > 100) ipol=2;
                 break;
-      case(3):  prfl=50 + *(p_px+4) + *(p_px+5) - *p_px;
-                if(prfl > 260) ipol=3;
-                else if(prfl > 150) ipol=2;
-                else if(prfl > 80) ipol=1;
+      case(3):  prfl=65 + *(p_px+4) + *(p_px+5) - *(p_px+1);
+                if(prfl > 260) ipol=4;
+                else if(prfl > 150) ipol=3;
+                else if(prfl > 80) ipol=2;
                 break;
-      case(4):  prfl=50 + *(p_px+5) + *(p_px+6) - *(p_px+2);
-                if(prfl > 285) ipol=3;
-                else if(prfl > 250) ipol=2;
-                else if(prfl > 150) ipol=1;
+      case(4):  prfl= 20 + *(p_px+5) + *(p_px+6) - *(p_px+2);
+                if(prfl > 270) ipol=4;
+                else if(prfl > 255) ipol=3;
+                else if(prfl > 160) ipol=2;
                 break;
-      case(5):  prfl=50 + *(p_px+6) + *(p_px+7) - *(p_px+3);
-                if(prfl > 290) ipol=3;
-                else if(prfl > 230) ipol=2;
-                else if(prfl > 160) ipol=1;
+      case(5):  prfl=30 + *(p_px+6) + *(p_px+7) - *(p_px+3);
+                if(prfl > 250) ipol=4;
+                else if(prfl > 200) ipol=3;
+                else if(prfl > 115) ipol=2;
                 break;
       case(6):  prfl=200 + *(p_px+7) - *(p_px+5) - *(p_px+4);
-                if(prfl > 220) ipol=2;
-                else if(prfl > 150) ipol=1;
+                if(prfl > 200) ipol=4;
+                else if(prfl > 140) ipol=3;
+                else if(prfl > 80) ipol=2;
                 break;
       case(7):  prfl=*(p_px+5);
-                if(prfl < 20) ipol=2;
-                else if(prfl < 50) ipol=1;                        
+                if(prfl < 35) ipol=3;
+                else if(prfl < 65) ipol=2;                        
                 break;
       default:  break;
     }
@@ -302,9 +327,8 @@ int16_t prfl;
         nn-=1;
         nn*=4;            
         nn += ipol;
-        nn += 2;
-        if(nn > 25) nn--;
-    }      
+        nn += 1;
+     }      
   }
     return(nn);
 }

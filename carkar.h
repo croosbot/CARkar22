@@ -7,6 +7,8 @@
 #ifndef __carkar_h
 #define __carkar_h
 
+#define DISSEL 0
+
 typedef unsigned int uint;
 
 #define PCF8574_I2C_ADDRESS 0x20
@@ -32,6 +34,16 @@ enum{
   IRS_L = 15,   //A1
   IRS_C = 16,   //A2
   IRS_R = 17    //A3
+};
+
+enum nodes{
+  nop, 
+  xrght,
+  xlft,
+  trgt150,
+  tlft150,
+  trgt160,
+  tlft160  
 };
 
 enum{Lft,Ctr,Rgt};
