@@ -21,7 +21,7 @@ uint8_t ld[10], *p_ld, ipol;
 int8_t motPwr;
 int16_t tmp, errr, errr0, derv, kP, kD;
 int8_t hdg, hdg0;
-    togg=0;
+    togg=1;
     xdet=0;
     sqm0=1;
     sqm=0x80;
@@ -31,6 +31,7 @@ int8_t hdg, hdg0;
     kD=16;        //  mod 09-12-23  (15)
     motPwr=105;   //  ~50cm/sec      mod 09-12-23 (95)
     dissel=DISSEL;
+    redled(!togg);
     Serial.println("START");
     while(1){
       encoders();
@@ -40,8 +41,8 @@ int8_t hdg, hdg0;
         if(getRC5()){
           if(rc5_msg==0xFF){
             togg=!togg;
-            redled(togg);
-            Lr=togg?0:1;
+            redled(!togg);    // redON track right edge
+            Lr=togg;
           }   
         }
         ledBlink();   //  onboard yellow
@@ -91,9 +92,10 @@ int8_t hdg, hdg0;
 //        if(sqm != sqm0) {Serial.println(sqm); sqm0=sqm;}
         switch(sqm){
           case(0): if(button()) sqm=1; break;
-          case(1): if(xdet & 0x1) {        //==== FIRST CROSSING ===
-//                    node(xrght, hdg);
-                      node(xlft, hdg);
+#if 1          
+          case(1): if(xdet & 0x80) {        //==== FIRST 150dgr CCW ===
+                    node(tlft150, hdg);
+//                  node(xlft, hdg);
                       sqm=2;  
                       break; 
                    }
@@ -102,11 +104,32 @@ int8_t hdg, hdg0;
                       analogWrite(PWML, motPwr - hdg);
                       analogWrite(PWMR, motPwr + hdg + 8);
                    } break;
-          case(2): if(node(nop, hdg)) sqm=6; break;
-          
+          case(2): sts=node(nop,hdg);
+                    if(sts){Lr=sts&0x1; sqm=3;} break;
+          case(3):  if(hdg != hdg0){
+                      hdg0=hdg;
+                      analogWrite(PWML, motPwr - hdg);
+                      analogWrite(PWMR, motPwr + hdg + 8);
+                    } break;            
+#endif
+#if 0          
+          case(1): if(xdet & 0x1) {        //==== FIRST CROSSING ===
+                    node(xrght, hdg);
+//                  node(xlft, hdg);
+                      sqm=2;  
+                      break; 
+                   }
+                   if(hdg != hdg0){
+                      hdg0=hdg;
+                      analogWrite(PWML, motPwr - hdg);
+                      analogWrite(PWMR, motPwr + hdg + 8);
+                   } break;
+          case(2): sts=node(nop,hdg);
+                    if(sts){Lr=sts&0x1; sqm=6;} break;
+#endif     
           case(6): if(xdet & 0x1) {        // === SECOND CROSSING ===
-//                    node(xrght, hdg);
-                      node(xlft, hdg);
+                    node(xrght, hdg);
+//                      node(xlft, hdg);
                       sqm=7;  
                       break; 
                     }
@@ -115,7 +138,8 @@ int8_t hdg, hdg0;
                       analogWrite(PWML, motPwr - hdg);
                       analogWrite(PWMR, motPwr + hdg + 8);
                     } break;
-          case(7):  if(node(nop, hdg)) sqm=10; break;          
+          case(7):  sts=node(nop,hdg);
+                    if(sts){Lr=sts&0x1; sqm=10;} break;
                  
 /* second linecrossing done, proceed to finish   */                    
           case(10):  if(xdet & 0x2){sqm=0x80; break;}
@@ -130,13 +154,14 @@ int8_t hdg, hdg0;
        }
        if(sqm && button()) sqm=0x80;      // button stop
        if(sqm) xdet=ntype(p_ld, Lr); else xdet=0;
+       redled(!Lr);
     }     // end ms 
   }       // end while
 }         // end LineFol
   
 // xdet[n]        evaluate node type  
-// [7]
-// [6]
+// [7]  approach 152 turn CCW
+// [6]  approach 152 turn CW
 // [5]
 // [4]
 // [3]
@@ -169,13 +194,15 @@ uint8_t xdet;
       px7_0 = *(p_px+7);  // derivative
       px0_0 = *p_px;      // derivative
       if(xdet) holdoff=25;
-      if(holdoff) redled(1); else redled(0);
+//      if(holdoff) redled(1); else redled(0);
       
   } //end holdoff
 //  Serial.print(strght); Serial.print("  ");/* Serial.print(holdoff); Serial.print("  "); */
 //  Serial.print(sqn); Serial.print("  "); Serial.println(xdet);
 //  Serial.print(*(p_px+4) + *(p_px+3)); Serial.print("  "); Serial.println(*p_px + *(p_px+7));
-  if(holdoff) holdoff--;  
+  if(holdoff) holdoff--; 
+    if(*p_px > 150) xdet|=0x40;         //  approach 152dgr turn CW
+    if(*(p_px+7) > 150) xdet|=0x80;     //  approach 152dgr turn CCW
   return(xdet);  
 }
 
@@ -188,25 +215,28 @@ static uint8_t sqn0=0x80;
     case(xrght): wmove(0x0, 0x90); O_Set(0x7); sqn=10; break;
     case(xlft): wmove(0x90, 0x0); O_Set(0x7); sqn=20; break;
     case(trgt150): break;
-    case(tlft150): break;
+    case(tlft150): O_Set(0x30); wmove(0x18, 0x10); sqn=30; break;   // 0x14,0x10
     case(trgt160): break;
     case(tlft160): break;
-    
-    case(10): if(MoveRdy){                    // X turn right
-                wmove(0x10,0x90); O_Set(0x12); sqn=11;
-               } break;
-    case(11): if(MoveRdy) sqn=12; break;
-    case(12): if(hdg > 0){
-               wmove(0x14,0x15); O_Set(0x3); sqn=13;
-              } break;
-    case(13): if(MoveRdy){sqn=nop; return(1);} break;
 
-    case(20): if(MoveRdy) {wmove(0x90,0x10); O_Set(0x48); sqn=21;} break;
-    case(21): if(MoveRdy){
-                wmove(0x14,0x14); O_Set(8); sqn=22;}
-                break;
-    case(22): if(MoveRdy){wmove(0x0,0x0); return(1);}
-                break;                
+/* X turn right  56 dgr */
+    case(10): if(MoveRdy){
+                wmove(0x10,0x90); O_Set(0x12); sqn=12;
+              } break;
+    case(11): if(MoveRdy) sqn=12; break;
+    case(12): if(MoveRdy){wmove(0x0,0x0); return(0x80);}
+ 
+/* X turn right  124 dgr */
+    case(20): if(MoveRdy) {wmove(0x90,0x10); O_Set(0x32); sqn=21;
+              } break;
+    case(21): if(MoveRdy){wmove(0x0,0x0); return(0x80);}
+              break;
+/* 150dgr CCW */               
+    case(30): if(MoveRdy){wmove(0x90,0x10); O_Set(0x40); sqn=31;}   // 0x30
+              break;
+    case(31): if(MoveRdy){wmove(0x0,0x0); sqn=32;}
+              break;
+    case(32): sqn=nop; return(0x80);
     default: break;
   }
   return(0);  
