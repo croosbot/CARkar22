@@ -7,7 +7,9 @@
 #ifndef __carkar_h
 #define __carkar_h
 
-#define DISSEL 0
+#define VINYL 0
+
+void LineFol(bool);
 
 typedef unsigned int uint;
 
@@ -38,8 +40,10 @@ enum{
 
 enum nodes{
   nop, 
-  xrght,
-  xlft,
+  xrght55,
+  xrght125,
+  xlft55,
+  xlft125,
   trgt150,
   tlft150,
   trgt160,

@@ -6,6 +6,7 @@
 #include "carkar.h"
 
 byte sq_d;              //dispatch
+byte leds;              // redled & yellowled status
 
 void setup() {
 int n;
@@ -25,6 +26,7 @@ int n;
   enco0_L=digitalRead(ENC_L);
   enco0_R=digitalRead(ENC_R);
   redled(0); // redled OFF
+  ylwled(0); // yellow led OFF
   Wire.begin();              // start I2C 
   n= Wire.requestFrom(PCF8574_I2C_ADDRESS,1); // aantal uint8_ts
  if(n==1){
@@ -41,10 +43,11 @@ int n;
     case(0): shuttle();   //  000  
     case(1): wall_1();    //  001
     case(2): shuffle();   //  010
-    case(3): LineFol();   //  011
-    case(4): sharptest(); //  100
+    case(3): LineFol(0);  //  011
+    case(4): LineFol(1);  //  100
     case(5): demo();      //  101
     case(6): scanraw();   //  110
+    case(7): sharptest(); //  100
     default: break;
   }  
 }
@@ -150,6 +153,7 @@ uint8_t enco_L, enco_R;
   }  
 }
 
+// on board LED
 void ledBlink(void){ 
 static uint8_t derate=0;
 static bool onof;
@@ -170,12 +174,33 @@ static uint8_t sq=0;
   return(0);
 }
 
-// offboard LED
 void redled(bool Nf){
-  Wire.beginTransmission(PCF8574_I2C_ADDRESS);
-  if(Nf) Wire.write(0x0F);  // redled on
-  else Wire.write(0x8F);    // redled off
-  Wire.endTransmission();
+uint8_t tmp;
+  switchLed((uint8_t) Nf);  
+}
+
+void ylwled(bool Nf){
+uint8_t tmp;
+  tmp=Nf?0x3:0x2;
+  switchLed(tmp);  
+}
+
+
+void switchLed(uint8_t sel){
+static uint8_t ledstat=0x0F;
+static uint8_t ledstat0=0xFF;
+  switch(sel){
+    case(0x0): ledstat|=0x80; break;
+    case(0x1): ledstat&=0x7F; break;
+    case(0x2): ledstat|=0x40; break;
+    case(0x3): ledstat&=0xBF; break;
+  }
+  if(ledstat != ledstat0){    // handle when changed
+    Wire.beginTransmission(PCF8574_I2C_ADDRESS);
+    Wire.write(ledstat);
+    Wire.endTransmission();
+    ledstat0=ledstat;
+  }
 }
 
 // acquire proximity sensors
