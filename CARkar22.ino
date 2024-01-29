@@ -168,8 +168,10 @@ static bool onof;
 bool button(void){
 static uint8_t sq=0;
   switch(sq){
-    case(0): if(!digitalRead(BUTT)) sq=1; break;      // ?pushed
+    case(0): if(!digitalRead(BUTT)) sq=1;      // ?pushed
+              break;
     case(1): if(digitalRead(BUTT)) {sq=0; return(1);} // ?released
+              break;
   }
   return(0);
 }

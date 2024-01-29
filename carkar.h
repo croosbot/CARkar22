@@ -1,8 +1,9 @@
 
 // carkar.h
+//  VERSIE 1.0 29/01/24
 // 06-10-2022
 // O_Set(200) :: 360 dgr rotate
-// O_Set(s) :: 3.14mm/lsb straight
+// O_Set(s) :: 1.5 mm/lsb straight
 
 #ifndef __carkar_h
 #define __carkar_h
@@ -10,6 +11,7 @@
 #define VINYL 0
 
 void LineFol(bool);
+bool button(void);
 
 typedef unsigned int uint;
 
@@ -44,10 +46,14 @@ enum nodes{
   xrght125,
   xlft55,
   xlft125,
-  trgt150,
-  tlft150,
-  trgt160,
-  tlft160  
+  CW_Y1,
+  CCW_Y1,
+  CW_Y2,
+  CCW_Y2,
+  CW_Y3,
+  CCW_Y3,
+  CW_Y4,
+  CCW_Y4
 };
 
 enum{Lft,Ctr,Rgt};

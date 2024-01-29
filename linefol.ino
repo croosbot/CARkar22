@@ -8,7 +8,7 @@
 
 
 //==== dipswitch setting 011 ===
-void LineFol(bool sel){             // LEFT/RIGHT TRACKING   Lr 1:Left   0:Right
+void LineFol(bool sel){             // 
 uint8_t getErr(uint8_t *, bool);
 uint8_t ntype(uint8_t *, int8_t, bool);   // node type
 uint8_t node(uint8_t, int8_t, int8_t);   // node handle
@@ -28,9 +28,8 @@ int8_t hdg;
     togg=1;
     togy=0;
     sqm0=1;
-    sqm=0x80;
+    sqm=0;
     Lr=1;         //  default tracking on left edge
-//    hdg0=0x80;
     kP=13;        // 14
     kD=16;        //  mod 09-12-23  (15)
     motPwr=105;   //  ~50cm/sec      mod 09-12-23 (95)
@@ -93,21 +92,22 @@ int8_t hdg;
         if(hdg > (motPwr-5)) hdg=motPwr-5;           // clip negative motPwr
         if(sel){
           switch(sqm){
-            case(0): if(button()) sqm=1; break;
-            case(1): if(ntype(p_ld, err8, Lr) & 0x1){ //sqm=0x80;
-                        wmove(0x0,0x0);
-                        sqm=0;
+            case(0): if(button()) sqm=1;
+                      break;
+            case(1): if(ntype(p_ld, err8, Lr) & 0x1){ 
+                        node(CW_Y4, err8, hdg);
+                        sqm=2;
                         break;
                       }
                       wheels(motPwr, hdg);
                      break;
-            case(0x80): wmove(0x0,0x0);
+            case(2): wmove(0x0,0x0);
                         sqm=0;
                         break;      
           }
         }else{
           switch(sqm){
-          case(0): if(button()) sqm=1; break;
+          case(0): if(button()) sqm=11; break;               // SKIP HEADER
           case(1): if(ntype(p_ld, err8, Lr) & 0x40) {        //==== swing Y4 left off ===
                       sqm=2;  
                       break; 
@@ -139,7 +139,7 @@ int8_t hdg;
                     wheels(motPwr, hdg);
                     break;                 // end X Cw
           case(7): if(ntype(p_ld, err8, Lr) & 0x40) {        //  === Y3 CW
-                      node(trgt160, err8, hdg);
+                      node(CW_Y3, err8, hdg);
                       sqm=8;  
                       break; 
                    }
@@ -147,15 +147,15 @@ int8_t hdg;
                     break;
           case(8): if(node(nop, err8, hdg)) sqm=9;
                     break;
-          case(9):  O_Set(0x60); sqm=10;
+          case(9):  O_Set(0x60); sqm=10;      // 15 cm
                     break;
           case(10): if(MoveRdy) {sqm=11; break;}
                     wheels(motPwr, hdg);
                     break;
           case(11): if(ntype(p_ld, err8, Lr) & 0x40){  //   Y4 CW
-                     node(trgt160, err8, hdg);
-                       sqm=12;
-                       break;
+                      node(CW_Y4, err8, hdg);
+                      sqm=12;
+                      break;
                      }     
                     wheels(motPwr, hdg);
                     break;                    
@@ -163,48 +163,49 @@ int8_t hdg;
                     sqm=13;
                     break;
           case(13): if(!(ntype(p_ld, err8, Lr) &0x40)){
-                     Lr=0; sqm=14;         // switch to rightedge tracking
-                     break;                // end swing Y4 left off ===
+                       O_Set(0x20); sqm=14;           //   5cm
+                     break;                           // end swing Y4 left off ===
                    }
                    wheels(motPwr, hdg);
-                   break;                  
-                   
-                   
-         case(14): if(ntype(p_ld, err8, Lr)& 0x10) {        //==== X straight ahead
+                   break;
+          case(14): if(MoveRdy){Lr=0; sqm=15; break;}  //switch to rightedge tracking
+                    wheels(motPwr, hdg);
+                    break;                   
+          case(15): if(ntype(p_ld, err8, Lr)& 0x10) {     //==== X straight ahead
                       O_Set(0x42);
                       ylwled(1);
                       wmove(0x12,0x12);
-                      sqm=15;
+                      sqm=16;
                       break; 
                    }
                     wheels(motPwr,hdg);
                     break;          
-          case(15): if(MoveRdy) {
+          case(16): if(MoveRdy) {
                       ylwled(0);
-                      sqm=16;
+                      sqm=17;
                       }
                       break;
-          case(16): if(ntype(p_ld, err8, Lr) & 0x80){             // === Y2 CCW 
-                        node(tlft150, err8, hdg);
-                        sqm=17;
+          case(17): if(ntype(p_ld, err8, Lr) & 0x80){             // === Y2 CCW 
+                        node(CCW_Y2, err8, hdg);
+                        sqm=18;
                         break;  
                      }
                      wheels(motPwr, hdg);
                      break;
-           case(17): if(node(nop, err8, hdg)) sqm=18;
+           case(18): if(node(nop, err8, hdg)) sqm=19;
                       break;
-           case(18): O_Set(0x60); sqm=19; break;         
-           case(19): if(MoveRdy) {sqm=20; break;}
+           case(19): O_Set(0x60); sqm=20; break;         
+           case(20): if(MoveRdy) {sqm=21; break;}
                      wheels(motPwr, hdg);
                      break;
-           case(20): if(ntype(p_ld, err8, Lr) & 0x80){      // ===Y1 CCW
-                      node(tlft150, err8, hdg);
-                      sqm=21;
+           case(21): if(ntype(p_ld, err8, Lr) & 0x80){      // ===Y1 CCW
+                      node(CCW_Y2, err8, hdg);
+                      sqm=22;
                       break;
                     }
                      wheels(motPwr, hdg);
                      break;
-            case(21): if(node(nop, err8, hdg)) sqm=30; break;
+            case(22): if(node(nop, err8, hdg)) sqm=30; break;
           
  //-----------------------------------------
            case(30): if(ntype(p_ld, err8, Lr) & 0x20){
@@ -280,33 +281,52 @@ bool strght;
   strght=((err8 > -4) && (err8 < 4))? 1:0;
   if((c_strght < 12) && strght) c_strght++;
   else if (!strght && c_strght) c_strght--;
-  if(c_strght > 9) ylwled(1); else ylwled(0);
   sum=*(p_px+3) + *(p_px+4);              // centre sensors
   if((sum < 100) && c_strght > 9) xdet|=0x1;
   return(xdet);  
 }
 
-
+/*
+  nop, 
+  xrght55,
+  xrght125,
+  xlft55,
+  xlft125,
+  CW_Y1,
+  CCW_Y1,
+  CW_Y2,
+  CCW_Y2,
+  CW_Y3,
+  CCW_Y3,
+  CW_Y4,
+  CCW_Y4
+*/
 uint8_t node(uint8_t type, int8_t err8, int8_t hdg){
 static uint8_t susp;  
 static uint8_t sqn=0;
   if(type) sqn=type;
   switch(sqn){
     case(nop): return(0); break;
-    case(xrght55): wmove(0x10, 0x10); O_Set(0x18); sqn=10; break;  // Lr=0
+    case(xrght55): wmove(0x10, 0x10); O_Set(0x18); sqn=15; break;  // Lr=0
     case(xrght125): break;    // nog
     case(xlft55):  break;     // nog
     case(xlft125): wmove(0x10, 0x10); O_Set(0x18); sqn=20; break;   // Lr=0
-    case(trgt150): wmove(0x10, 0x10); O_Set(0x30); sqn=30; break; // Lr=1
-    case(tlft150): O_Set(0x40); sqn=40; break; // Lr=0  0x30
-    case(trgt160): O_Set(0x46); sqn=50; break; //Lr=1
-    case(tlft160): wmove(0x10, 0x10); O_Set(0x46); sqn=60; break; // Lr=0
+    case(CW_Y1):  break;
+    case(CCW_Y1): wmove(0x10, 0x10); O_Set(0x46); sqn=70; break; // Lr=0
+    case(CW_Y2):  break;
+    case(CCW_Y2): wmove(0x10, 0x10); O_Set(0x46); sqn=60; break; // Lr=0
+    case(CW_Y3):  O_Set(0x46); sqn=50; break; //Lr=1     // 10 cm
+    case(CCW_Y3): break;
+    case(CW_Y4): O_Set(0x60); wmove(0x18,0x12); sqn=55; break; //Lr=1     // 10 cm
+    case(CCW_Y4): break;
+    
+    
     
 /* X turn CW  */
-    case(10): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=11;} break;
-    case(11): susp--; if(susp==0){wmove(0x10, 0x90); O_Set(0x12); sqn=12;} break; 
-    case(12): if(MoveRdy) sqn=13; break;
-    case(13): if(err8 > -2){wmove(0x0,0x0); sqn=0; return(1);} break;
+    case(15): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=16;} break;
+    case(16): susp--; if(susp==0){wmove(0x10, 0x90); O_Set(0x12); sqn=17;} break; 
+    case(17): if(MoveRdy) sqn=18; break;
+    case(18): if(err8 > -2){wmove(0x0,0x0); sqn=0; return(1);} break;
    
  
 /* X turn CCW  */
@@ -327,18 +347,30 @@ static uint8_t sqn=0;
     case(42): if(MoveRdy) sqn=43; break;
     case(43): if(err8 < 4){wmove(0x0,0x0); sqn=0; return(1);} break;
  
-/* 160dgr CW */   
-    case(50): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=51; break;}  //51
-               wheels(105,hdg); break;  // 31
+//=== CW_Y3     
+    case(50): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=51;}  //51
+               break;  // 31
     case(51): susp--; if(susp==0){wmove(0x10,0x90); O_Set(0x4B); sqn=52;} break;  //3c
     case(52): if(MoveRdy) sqn=53; break;
     case(53): if(err8 > -2){wmove(0x0,0x0); sqn=0; return(1);} break;
+    
+//=== CW_Y4
+    case(55): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=56; break;}  //51
+    case(56): susp--; if(susp==0) {wmove(0x10,0x90); O_Set(0x4B); sqn=57;} break;  //3c
+    case(57): if(MoveRdy)sqn=58; break;
+    case(58): if(err8 < 0){wmove(0x0,0x0); sqn=0; return(1);} break;
 
-
-/* 160dgr CCW */   
+//===CCW Y2
     case(60): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=61;} break;
-    case(61): susp--; if(susp==0){wmove(0x90,0x10); O_Set(0x4B); sqn=62;} break;
-    case(62): if(MoveRdy) {wmove(0x0,0x0); sqn=0; return(1);} break;
+    case(61): susp--; if(susp==0){wmove(0x92,0x10); O_Set(0x4B); sqn=62;} break;
+    case(62): if(MoveRdy) sqn=63; break;
+    case(63): if(err8 < 4) {wmove(0x0,0x0); sqn=0; return(1);} break;
+
+//===CCW Y1
+    case(70): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=71;} break;
+    case(71): susp--; if(susp==0){wmove(0x92,0x10); O_Set(0x4B); sqn=72;} break;
+    case(72): if(MoveRdy) sqn=73; break;
+    case(73): if(err8 < 4) {wmove(0x0,0x0); sqn=0; return(1);} break;
     default: break;
   } 
   return(0);  
