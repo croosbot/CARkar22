@@ -107,7 +107,7 @@ int8_t hdg;
           }
         }else{
           switch(sqm){
-          case(0): if(button()) sqm=11; break;               // SKIP HEADER
+          case(0): if(button()) sqm=1; break;
           case(1): if(ntype(p_ld, err8, Lr) & 0x40) {        //==== swing Y4 left off ===
                       sqm=2;  
                       break; 
@@ -269,8 +269,6 @@ uint8_t xdet;
 static uint8_t c_strght=0;
 bool strght;
   xdet=0;
-//  if((*(p_px+1) > 110) && Lr) xdet |= 0x2;         // 130 150 detect by right sensor
-//  else if ((*(p_px+6) > 110) && !Lr) xdet |= 0x2;   // 130 150 detect by left sensor
   if(*p_px > 120) xdet|=0x40;         //    Y junction detect on right sensor
   if(*(p_px+7) > 120) xdet|=0x80;     //    Y junction detect on left sensor
   sum=*p_px + *(p_px+1);
@@ -286,21 +284,8 @@ bool strght;
   return(xdet);  
 }
 
-/*
-  nop, 
-  xrght55,
-  xrght125,
-  xlft55,
-  xlft125,
-  CW_Y1,
-  CCW_Y1,
-  CW_Y2,
-  CCW_Y2,
-  CW_Y3,
-  CCW_Y3,
-  CW_Y4,
-  CCW_Y4
-*/
+// perform rotation on junction Y1..Y4 CW resp. CCW
+// perform rotation on linecrossing X CW resp. CCW
 uint8_t node(uint8_t type, int8_t err8, int8_t hdg){
 static uint8_t susp;  
 static uint8_t sqn=0;
