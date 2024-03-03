@@ -2,7 +2,7 @@
 /*
       refer carkar.h and set
       VINYL   0 for standard
-      VINYL   1 for others compliant
+      VINYL   1 HCC robotica compliant
 
 */
 
@@ -16,8 +16,7 @@ void wheels(uint8_t , int8_t);
 uint8_t vinyl;
 uint8_t sql, sqm, sqm0;      // master sequencer        
 const uint8_t offs[8]={175,200,200,200,235,218,210,185};  
-uint8_t sts, i;
-//uint8_t c_strght;
+uint8_t sts, i, susp;
 bool togg, togy, Lr, Lr0;
 uint8_t ld[10], *p_ld, ipol;
 uint8_t motPwr;
@@ -79,6 +78,7 @@ int8_t hdg;
         errr=(int16_t)getErr(p_ld,Lr);
         errr-=14;     // -13..0..+13
         err8=(int8_t)errr;     // linesensor range -13..0..13
+        kP=((err8 > 9) || (err8 < -9)) ? 18:13;   // 03-03-2024
         derv=errr-errr0;
         errr0=errr;
         derv*=kD;
@@ -94,16 +94,32 @@ int8_t hdg;
           switch(sqm){
             case(0): if(button()) sqm=1;
                       break;
-            case(1): if(ntype(p_ld, err8, Lr) & 0x1){ 
-                        node(CW_Y4, err8, hdg);
+            case(1): if(ntype(p_ld, err8, Lr) & 0x1){
+                        wmove(0x84,0x84);   // active brake
                         sqm=2;
                         break;
                       }
+//                      Serial.println(err8);
                       wheels(motPwr, hdg);
                      break;
             case(2): wmove(0x0,0x0);
-                        sqm=0;
-                        break;      
+                        susp=10;
+                        sqm=3;
+                        break;
+            case(3):  susp--; if(susp==0){
+                      O_Set(90);
+                      wmove(0x12,0x92);
+                      sqm=4;
+                      break;
+             case(4): if(MoveRdy){
+                       wmove(0x13,0x13); 
+                       O_Set(50);
+                       sqm=5;
+                       }
+                       break; 
+             case(5): if(MoveRdy) sqm=1;
+                       break;         
+            }
           }
         }else{
           switch(sqm){
@@ -266,8 +282,7 @@ int8_t hdg;
 uint8_t ntype(uint8_t *p_px, int8_t err8 , bool Lr){
 uint16_t sum;
 uint8_t xdet;
-static uint8_t c_strght=0;
-bool strght;
+uint8_t ii, endln;
   xdet=0;
   if(*p_px > 120) xdet|=0x40;         //    Y junction detect on right sensor
   if(*(p_px+7) > 120) xdet|=0x80;     //    Y junction detect on left sensor
@@ -275,12 +290,12 @@ bool strght;
   if(sum > 200 ) xdet |= 0x20;
   sum=*(p_px+6) + *(p_px+7);
   if(sum > 200) xdet|= 0x10;
-// end of line detect  
-  strght=((err8 > -4) && (err8 < 4))? 1:0;
-  if((c_strght < 12) && strght) c_strght++;
-  else if (!strght && c_strght) c_strght--;
-  sum=*(p_px+3) + *(p_px+4);              // centre sensors
-  if((sum < 100) && c_strght > 9) xdet|=0x1;
+
+// end line detect
+// endln :blackline > 150   :fullwhite < 50   threshold 90
+  endln=0;
+  for(ii=0; ii<8; ii++) if(*(p_px+ii) > endln) endln= *(p_px+ii);
+  if(endln < 90) xdet|=0x1;
   return(xdet);  
 }
 
