@@ -58,6 +58,9 @@ enum nodes{
 
 enum{Lft,Ctr,Rgt};
 
+void redled(bool);
+void ylwled(bool);
+
 unsigned long ms, msref;
 bool edge;
 uint16_t odosum, odoref;
