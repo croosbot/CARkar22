@@ -5,8 +5,8 @@
       VINYL   1 HCC robotica compliant
       10-04-24
       20-04-24 include de Nayer revisions
+      v1.0
 */
-
 
 //==== dipswitch setting 011 ===
 void LineFol(bool sel){             // 
@@ -392,7 +392,7 @@ static uint8_t sqn=0;
     case(xlft55):  break;     // nog
     case(xlft125): wmove(0x16, 0x16); O_Set(0x18); sqn=20; break; // Lr=0
     case(CW_Y1):  break;
-    case(CCW_Y1): wmove(0x16, 0x16); O_Set(0x46); sqn=70; break; // Lr=0
+    case(CCW_Y1): wmove(0x16, 0x16); O_Set(0x3C); sqn=70; break; // Lr=0  0x46
     case(CW_Y2):  break;
     case(CCW_Y2): wmove(0x16, 0x16); O_Set(0x46); sqn=60; break; // Lr=0
     case(CW_Y3):  wmove(0x16, 0x16); O_Set(0x46); sqn=50; break; //Lr=1     // 10 cm
@@ -448,7 +448,7 @@ static uint8_t sqn=0;
 
 //===CCW Y1
     case(70): if(MoveRdy){wmove(0x0,0x0); susp=4; sqn=71;} break;
-    case(71): susp--; if(susp==0){wmove(0x92,0x10); O_Set(0x4B); sqn=72;} break;
+    case(71): susp--; if(susp==0){wmove(0x92,0x10); O_Set(0x3C); sqn=72;} break; // 0x4B
     case(72): if(MoveRdy) sqn=73; break;
     case(73): if(err8 < 4) {wmove(0x0,0x0); sqn=0; return(1);} break;
     default: break;
