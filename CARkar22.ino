@@ -48,7 +48,7 @@ int n;
     case(4): LineFol(1);  //  100
     case(5): demo();      //  101
     case(6): scanraw();   //  110
-    case(7): sharptest(); //  100
+    case(7): sharptest(); //  111
     default: break;
   }  
 }
