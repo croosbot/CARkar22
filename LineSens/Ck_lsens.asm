@@ -191,7 +191,7 @@ initz	nop
 	clrf	LATA
 	movlw	b'11000011'	; LATC[3..5] mux RC<2> test
 	andwf	TRISC,F
-	movlw	b'11101011'	; (obso RA2 servo1  RA4 servo2)
+	movlw	b'11101010'	; (up to 10.02.25 b'11101011' RA0 output DC restore)  (obso RA2 servo1  RA4 servo2)
 	andwf	TRISA,F
 	_bank	ADCON1		; == analog setup
 	movlw	b'01110000'	; left justified
