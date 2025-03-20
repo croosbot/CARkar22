@@ -8,7 +8,7 @@
 #ifndef __carkar_h
 #define __carkar_h
 
-#define VINYL 1
+#define VINYL 0
 
 void LineFol(bool);
 bool button(void);
