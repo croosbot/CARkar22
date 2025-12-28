@@ -8,7 +8,7 @@
 #ifndef __carkar_h
 #define __carkar_h
 
-#define VINYL 0
+#define VINYL 0       // "1" [HCC environment] "0" [home]
 
 void LineFol(bool);
 bool button(void);
