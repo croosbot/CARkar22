@@ -1,6 +1,6 @@
 
 // carkar.h
-//  VERSIE 1.0 29/01/24
+// VERSIE 1.0 29/01/24
 // 06-10-2022
 // O_Set(200) :: 360 dgr rotate
 // O_Set(s) :: 1.5 mm/lsb straight
@@ -8,7 +8,7 @@
 #ifndef __carkar_h
 #define __carkar_h
 
-#define VINYL 0       // "1" [HCC environment] "0" [home]
+#define VINYL 1       // "1" [HCC environment] "0" [home]
 
 void LineFol(bool);
 bool button(void);
